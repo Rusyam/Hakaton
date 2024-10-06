@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Планетарий - Солнечная система</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+    // Создание сцены
+    const scene = new THREE.Scene();
+
+    // Добавление фона
+    const backgroundTexture = new THREE.TextureLoader().load('https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/9e975258-98da-4aab-92c2-bf85e5878181/d9sc1fk-93461bf8-db28-4ebf-ab65-0e5252dc170d.jpg/v1/fill/w_1117,h_715,q_70,strp/night_sky_star_by_alena_48_d9sc1fk-pre.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9ODIwIiwicGF0aCI6IlwvZlwvOWU5NzUyNTgtOThkYS00YWFiLTkyYzItYmY4NWU1ODc4MTgxXC9kOXNjMWZrLTkzNDYxYmY4LWRiMjgtNGViZi1hYjY1LTBlNTI1MmRjMTcwZC5qcGciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.QCEAjHPVGwUCbf-7Nj5cfVVl2Xp9PBI26QUDomoENQo'); // Фоновая текстура
+    const backgroundGeometry = new THREE.SphereGeometry(1000, 32, 32); // Создаем большую сферу для фона
+    const backgroundMaterial = new THREE.MeshBasicMaterial({ map: backgroundTexture, side: THREE.BackSide }); // Задаем материал с задней стороной
+    const backgroundMesh = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+    scene.add(backgroundMesh); // Добавляем фон в сцену
+
+    // Добавление камеры
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.z = 300;
+
+    // Рендерер
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Контроллеры камеры
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.enablePan = true;
+    controls.enableZoom = true;
+
+// Ограничение максимального расстояния до камеры
+    controls.maxDistance = 700;
+
+    // Добавление звездного фона
+    function createStars() {
+        const starGeometry = new THREE.BufferGeometry();
+        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff });
+        const starVertices = [];
+
+        // Уменьшаем количество звезд до 2000
+        for (let i = 0; i < 2000; i++) {
+            const x = (Math.random() - 0.5) * 2000;
+            const y = (Math.random() - 0.5) * 2000;
+            const z = (Math.random() - 0.5) * 2000;
+            starVertices.push(x, y, z);
+        }
+
+        starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+    }
+    createStars();
+
+    // Функция создания планет с орбитой
+    function createPlanet(size, texture, distance) {
+        const geometry = new THREE.SphereGeometry(size * 8.3, 32, 32); // Увеличиваем размер планет в 5 раз
+        const material = new THREE.MeshBasicMaterial({
+            map: new THREE.TextureLoader().load(texture)
+        });
+        const planet = new THREE.Mesh(geometry, material);
+        planet.userData.distance = distance;  // Орбитальное расстояние
+        planet.userData.angle = Math.random() * 2 * Math.PI;  // Случайное начальное положение
+        planet.userData.speed = (50 / distance) * 0.0007;  // Скорость движения (произвольное значение)
+
+        scene.add(planet);
+        return planet;
+    }
+
+    // Создаем Солнце
+    const sun = createPlanet(5, 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/ebbf2019-9330-43af-945d-d93d81bfadc7/dg4via3-7bde39bd-4a37-4fec-8f3d-69cdd28a3ebc.png/v1/fill/w_1264,h_632,q_70,strp/venus_texture_by_planetboiearth_dg4via3-pre.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NjQwIiwicGF0aCI6IlwvZlwvZWJiZjIwMTktOTMzMC00M2FmLTk0NWQtZDkzZDgxYmZhZGM3XC9kZzR2aWEzLTdiZGUzOWJkLTRhMzctNGZlYy04ZjNkLTY5Y2RkMjhhM2ViYy5wbmciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.Uwx_XPXSbWeUfUUfY6hltnRxkp2gXblLKxB1O947IuQ', 0);  // Текстура Солнца
+
+    // Добавляем планеты с корректными текстурами и уменьшаем расстояние между ними
+    const mercury = createPlanet(0.5, 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/6e527eb9-99dc-4554-9ea2-dd0e84e79860/dcklc0u-feeae0dc-f164-436a-8e75-5c9a7f3e3c71.png/v1/fit/w_828,h_414,q_70,strp/mercury_texture_map_used_by_solar_walk_2_by_bob3studios_dcklc0u-414w-2x.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTAyNCIsInBhdGgiOiJcL2ZcLzZlNTI3ZWI5LTk5ZGMtNDU1NC05ZWEyLWRkMGU4NGU3OTg2MFwvZGNrbGMwdS1mZWVhZTBkYy1mMTY0LTQzNmEtOGU3NS01YzlhN2YzZTNjNzEucG5nIiwid2lkdGgiOiI8PTIwNDgifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.sMPMAFnOyWGNm1A8Rn1oW60NAtCgbczgCjXwVr_24F8', 75);  // Меркурий
+    const venus = createPlanet(0.9, 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/9b7029c3-9717-4658-9066-11c30aa24029/dctqvn0-4efa81e8-656a-4f2c-81f5-91ba4801704f.png/v1/fill/w_1264,h_632,q_70,strp/venus_texture_map_by_oleg_pluton_dctqvn0-pre.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NjQwIiwicGF0aCI6IlwvZlwvOWI3MDI5YzMtOTcxNy00NjU4LTkwNjYtMTFjMzBhYTI0MDI5XC9kY3Rxdm4wLTRlZmE4MWU4LTY1NmEtNGYyYy04MWY1LTkxYmE0ODAxNzA0Zi5wbmciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.IF758u8HVFFOkU2krmJsldgS1hri8LNEfuhAhOJSdbM', 115);  // Венера
+    const earth = createPlanet(1, 'https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg', 175);  // Земля
+    const mars = createPlanet(0.6, 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/6e527eb9-99dc-4554-9ea2-dd0e84e79860/dckiu8c-727ad23f-7760-42f2-9669-aa2de0f3c832.png/v1/fit/w_828,h_414,q_70,strp/mars_texture_map_used_by_solar_walk_2_by_bob3studios_dckiu8c-414w-2x.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTAyNCIsInBhdGgiOiJcL2ZcLzZlNTI3ZWI5LTk5ZGMtNDU1NC05ZWEyLWRkMGU4NGU3OTg2MFwvZGNraXU4Yy03MjdhZDIzZi03NzYwLTQyZjItOTY2OS1hYTJkZTBmM2M4MzIucG5nIiwid2lkdGgiOiI8PTIwNDgifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.dRnTFnFlXIE0q0TzB3phykHWs_Ev0yRSN4gEW7vG8mU', 235);  // Марс
+    const jupiter = createPlanet(2, 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/5938ae9e-47de-424a-8836-f98e6658d37b/dcsa52n-533c651c-e9d3-40b7-bb89-c5a6d2cdeda8.png/v1/fit/w_828,h_414,q_70,strp/jupiter_1996_texture_map_by_askaniy_dcsa52n-414w-2x.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTgwMCIsInBhdGgiOiJcL2ZcLzU5MzhhZTllLTQ3ZGUtNDI0YS04ODM2LWY5OGU2NjU4ZDM3YlwvZGNzYTUybi01MzNjNjUxYy1lOWQzLTQwYjctYmI4OS1jNWE2ZDJjZGVkYTgucG5nIiwid2lkdGgiOiI8PTM2MDAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ._ic_Jv-X6-ByYT3MfSQc_rjiL-mmptNwSh9RzMzD-GU', 315);  // Юпитер
+    const saturn = createPlanet(1.7, 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/7117654f-5f91-4761-bde0-727b9abb0112/dhxx1cg-d2cf1d07-30ca-4489-969c-7b0085bf5cf6.png/v1/fill/w_1264,h_632,q_70,strp/saturn_texture_map__fictional__by_4stron4omi4_dhxx1cg-pre.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NjQwIiwicGF0aCI6IlwvZlwvNzExNzY1NGYtNWY5MS00NzYxLWJkZTAtNzI3YjlhYmIwMTEyXC9kaHh4MWNnLWQyY2YxZDA3LTMwY2EtNDQ4OS05NjljLTdiMDA4NWJmNWNmNi5wbmciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.KnaC2ll621KnC6-PhcqvKhw-4Q4GH63qEXtBl2NAdo8', 375);  // Сатурн
+    const uranus = createPlanet(1.3, 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/c9d1b671-4fc3-4f7f-a472-aaf3cc663939/dtccdt-2758c069-65a2-403e-80b1-dbc94b1789c5.jpg/v1/fit/w_600,h_798,q_70,strp/blue_grunge_texture_by_solstock_dtccdt-375w-2x.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9Nzk4IiwicGF0aCI6IlwvZlwvYzlkMWI2NzEtNGZjMy00ZjdmLWE0NzItYWFmM2NjNjYzOTM5XC9kdGNjZHQtMjc1OGMwNjktNjVhMi00MDNlLTgwYjEtZGJjOTRiMTc4OWM1LmpwZyIsIndpZHRoIjoiPD02MDAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.-ZVlOqzNuDUEVHcLZO6Vo1HGu8ic0_8BKian_h0SaM4', 405);  // Уран
+    const neptune = createPlanet(1.3, 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/a914cfe7-dc0e-4514-a4cd-9e613759b5c5/dhi7yxr-a4db0d4e-e268-4382-8bd6-af6b1b4db7fe.png/v1/fill/w_1024,h_512,q_80,strp/neptune_texture__by_planetmapmaker_dhi7yxr-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NTEyIiwicGF0aCI6IlwvZlwvYTkxNGNmZTctZGMwZS00NTE0LWE0Y2QtOWU2MTM3NTliNWM1XC9kaGk3eXhyLWE0ZGIwZDRlLWUyNjgtNDM4Mi04YmQ2LWFmNmIxYjRkYjdmZS5wbmciLCJ3aWR0aCI6Ijw9MTAyNCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.83GR6CLftpMYLB3CZ7kdKL3F4894LecdxG-Tm2j-HNQ', 455);  // Нептун
+    // ... остальной код
+
+    // Добавление колец к Сатурну
+    const saturnRingGeometry = new THREE.RingGeometry(saturn.geometry.parameters.radius * 1.2, saturn.geometry.parameters.radius * 1.5, 32); // Создаем геометрию кольца
+    const saturnRingMaterial = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/1c22fc5e-f947-4e51-bdc2-66ee75708d6a/df8t1tx-24c63736-9c8e-478f-adac-7268db7f5b8c.png/v1/fill/w_1264,h_632,q_70,strp/tethys_albedo_map__11k__by_zelario_df8t1tx-pre.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NjQwIiwicGF0aCI6IlwvZlwvMWMyMmZjNWUtZjk0Ny00ZTUxLWJkYzItNjZlZTc1NzA4ZDZhXC9kZjh0MXR4LTI0YzYzNzM2LTljOGUtNDc4Zi1hZGFjLTcyNjhkYjdmNWI4Yy5wbmciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.xJLWIIPG8dNUZ071eu77-Ace4eLmWOQiQA1TTIZVW6k'), side: THREE.DoubleSide }); // Загружаем текстуру колец
+    const saturnRing = new THREE.Mesh(saturnRingGeometry, saturnRingMaterial);
+    saturnRing.rotation.x = Math.PI / 2; // Размещаем плоскость кольца перпендикулярно оси вращения Сатурна
+    saturn.add(saturnRing); // Добавляем кольца к объекту Сатурн
+
+// ... остальной код
+    // Функция создания спутника
+    function createMoon(size, texture, distance, parentPlanet) {
+        const geometry = new THREE.SphereGeometry(size * 6, 32, 32); // Увеличиваем размер спутника
+        const material = new THREE.MeshBasicMaterial({
+            map: new THREE.TextureLoader().load(texture)
+        });
+        const moon = new THREE.Mesh(geometry, material);
+        moon.userData.distance = distance;  // Орбитальное расстояние
+        moon.userData.angle = Math.random() * 2 * Math.PI;  // Случайное начальное положение
+        moon.userData.speed = (100 / distance) * 0.0005;  // Скорость движения (произвольное значение)
+
+        parentPlanet.add(moon); // Закрепляем спутник за планетой
+        return moon;
+    }
+    // Создаем спутники для Марса
+    const phobos = createMoon(0.2, 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/6e527eb9-99dc-4554-9ea2-dd0e84e79860/dclugc9-14663f13-30c6-4fe3-8d1a-505571e67232.jpg/v1/fit/w_828,h_414,q_70,strp/pluto_texture_map_fixed_blur_by_bob3studios_dclugc9-414w-2x.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MjA0OCIsInBhdGgiOiJcL2ZcLzZlNTI3ZWI5LTk5ZGMtNDU1NC05ZWEyLWRkMGU4NGU3OTg2MFwvZGNsdWdjOS0xNDY2M2YxMy0zMGM2LTRmZTMtOGQxYS01MDU1NzFlNjcyMzIuanBnIiwid2lkdGgiOiI8PTQwOTYifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.LD4_aIXruEkobYZWPfxQZ8D2ytuHE8kzh8qgCz2XqYs', 25, mars); // Фобос
+    const deimos = createMoon(0.4, 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/455a29c7-9dbd-45bb-8049-881a9c921a08/dedfbpp-520ee9bd-bac8-4833-b1d9-1175e6cf13bc.png/v1/fill/w_1264,h_632,q_70,strp/rhea_disp_by_trappist1e_dedfbpp-pre.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NjQwIiwicGF0aCI6IlwvZlwvNDU1YTI5YzctOWRiZC00NWJiLTgwNDktODgxYTljOTIxYTA4XC9kZWRmYnBwLTUyMGVlOWJkLWJhYzgtNDgzMy1iMWQ5LTExNzVlNmNmMTNiYy5wbmciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.SRPzzkQ7d9ukZJ5kNbmUiWRnHgO3uGLTw33zz0Dt-lM', 30, mars); // Деймос
+    //луна
+    const earthMoon = createMoon(0.27, 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/cfea20ba-0fa1-4ac2-9378-52792e6eadb8/dfhwwi3-17e8e3d4-70a2-48d1-91f3-3fd5f820518d.jpg/v1/fill/w_1065,h_532,q_75,strp/the_moon_texture_from_moon_pictures_logo_by_mtvafan2015_dfhwwi3-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NTMyIiwicGF0aCI6IlwvZlwvY2ZlYTIwYmEtMGZhMS00YWMyLTkzNzgtNTI3OTJlNmVhZGI4XC9kZmh3d2kzLTE3ZThlM2Q0LTcwYTItNDhkMS05MWYzLTNmZDVmODIwNTE4ZC5qcGciLCJ3aWR0aCI6Ijw9MTA2NSJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.I-9VzBdXbaUJF4FEo82QHR4xvERI2-NUxtDfDqdbEmk', 20, earth);
+    // Создаем спутники для Сатурна
+    const titan = createMoon(0.5, 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/06a094a4-7bd7-4bb9-b998-6c1e17f66c08/db0f8m0-b4601154-62d7-415e-a877-9a9322546f39.png/v1/fill/w_1264,h_632,q_70,strp/titan_texture_map_8k_by_fargetanik_db0f8m0-pre.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9ODAwIiwicGF0aCI6IlwvZlwvMDZhMDk0YTQtN2JkNy00YmI5LWI5OTgtNmMxZTE3ZjY2YzA4XC9kYjBmOG0wLWI0NjAxMTU0LTYyZDctNDE1ZS1hODc3LTlhOTMyMjU0NmYzOS5wbmciLCJ3aWR0aCI6Ijw9MTYwMCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.HSAprc6RN07t8UafRhBKahszi4bHHhsX2uUfTd16gYE', 35, saturn); // Титан
+    const rhea = createMoon(0.3, 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/6e527eb9-99dc-4554-9ea2-dd0e84e79860/dcmcvjm-0c36230b-3567-4cea-a63f-1387816416c7.jpg/v1/fit/w_828,h_414,q_70,strp/fictional_texture_map_of_pluto_3_8_billion_years_a_by_bob3studios_dcmcvjm-414w-2x.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTk1OCIsInBhdGgiOiJcL2ZcLzZlNTI3ZWI5LTk5ZGMtNDU1NC05ZWEyLWRkMGU4NGU3OTg2MFwvZGNtY3ZqbS0wYzM2MjMwYi0zNTY3LTRjZWEtYTYzZi0xMzg3ODE2NDE2YzcuanBnIiwid2lkdGgiOiI8PTM5MTMifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.N7RpQYw0GJzlzAcZcze59QmnPNSKr15R3QF7PLIObWw', 40, saturn); // Рея
+
+    // Функция создания астероидов
+    const asteroids = [];
+    function createAsteroid(size, texture) {
+        const geometry = new THREE.SphereGeometry(size, 8, 8);
+        const material = new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load(texture) });
+        const asteroid = new THREE.Mesh(geometry, material);
+
+        // Устанавливаем случайное начальное положение
+        const angle = Math.random() * 2 * Math.PI;
+        const distance = 250 + Math.random() * 200; // Расстояние от центра системы
+        asteroid.position.set(distance * Math.cos(angle), Math.random() * 50 - 25, distance * Math.sin(angle)); // Добавляем небольшое смещение по Y
+
+        // Задаем случайную скорость
+        asteroid.userData.speed = Math.random() * 0.05 + 0.01; // Случайная скорость
+        scene.add(asteroid);
+        asteroids.push(asteroid);
+    }
+
+    // Создаем астероиды
+    for (let i = 0; i < 50; i++) {
+        createAsteroid(0.2, ''); // Текстура астероида
+    }
+
+    // Орбитальная анимация
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // Вращение планет вокруг своей оси
+        mercury.rotation.y += 0.004;
+        venus.rotation.y += 0.003;
+        earth.rotation.y += 0.002;
+        mars.rotation.y += 0.001;
+        jupiter.rotation.y += 0.001;
+        saturn.rotation.y += 0.001;
+        uranus.rotation.y += 0.001;
+        neptune.rotation.y += 0.001;
+
+// Вращение вокруг Солнца
+mercury.userData.angle += mercury.userData.speed;
+venus.userData.angle += venus.userData.speed;
+earth.userData.angle += earth.userData.speed;
+mars.userData.angle += mars.userData.speed;
+jupiter.userData.angle += jupiter.userData.speed;
+saturn.userData.angle += saturn.userData.speed;
+uranus.userData.angle += uranus.userData.speed;
+neptune.userData.angle += neptune.userData.speed;
+
+// Установка позиций планет по орбите
+mercury.position.set(mercury.userData.distance * Math.cos(mercury.userData.angle), 0, mercury.userData.distance * Math.sin(mercury.userData.angle));
+venus.position.set(venus.userData.distance * Math.cos(venus.userData.angle), 0, venus.userData.distance * Math.sin(venus.userData.angle));
+earth.position.set(earth.userData.distance * Math.cos(earth.userData.angle), 0, earth.userData.distance * Math.sin(earth.userData.angle));
+mars.position.set(mars.userData.distance * Math.cos(mars.userData.angle), 0, mars.userData.distance * Math.sin(mars.userData.angle));
+jupiter.position.set(jupiter.userData.distance * Math.cos(jupiter.userData.angle), 0, jupiter.userData.distance * Math.sin(jupiter.userData.angle));
+saturn.position.set(saturn.userData.distance * Math.cos(saturn.userData.angle), 0, saturn.userData.distance * Math.sin(saturn.userData.angle));
+uranus.position.set(uranus.userData.distance * Math.cos(uranus.userData.angle), 0, uranus.userData.distance * Math.sin(uranus.userData.angle));
+neptune.position.set(neptune.userData.distance * Math.cos(neptune.userData.angle), 0, neptune.userData.distance * Math.sin(neptune.userData.angle));
+
+// Установка позиций спутников
+phobos.userData.angle += phobos.userData.speed;
+deimos.userData.angle += deimos.userData.speed;
+titan.userData.angle += titan.userData.speed;
+rhea.userData.angle += rhea.userData.speed;
+earthMoon.userData.angle += earthMoon.userData.speed;
+
+phobos.position.set(phobos.userData.distance * Math.cos(phobos.userData.angle), 0, phobos.userData.distance * Math.sin(phobos.userData.angle));
+deimos.position.set(deimos.userData.distance * Math.cos(deimos.userData.angle), 0, deimos.userData.distance * Math.sin(deimos.userData.angle));
+titan.position.set(titan.userData.distance * Math.cos(titan.userData.angle), 0, titan.userData.distance * Math.sin(titan.userData.angle));
+rhea.position.set(rhea.userData.distance * Math.cos(rhea.userData.angle), 0, rhea.userData.distance * Math.sin(rhea.userData.angle));
+earthMoon.position.set(earthMoon.userData.distance * Math.cos(earthMoon.userData.angle), 0, earthMoon.userData.distance * Math.sin(earthMoon.userData.angle));
+
+// Анимация астероидов
+asteroids.forEach(asteroid => {
+    // Двигаем астероид
+    asteroid.position.z -= asteroid.userData.speed;
+
+    // Если астероид уходит за пределы, возвращаем его на противоположную сторону
+    if (asteroid.position.z < -300) {
+        const angle = Math.random() * 2 * Math.PI;
+        const distance = 300 + Math.random() * 200;
+        asteroid.position.set(distance * Math.cos(angle), Math.random() * 50 - 25, 300);
+    }
+
+    // Проверяем пересечение с планетами (можно добавить условие для коллизии)
+    // Здесь можно реализовать дополнительную логику, если нужно
+});
+
+controls.update();  // Обновляем контроллер камеры
+renderer.render(scene, camera);  // Рендер сцены
+}
+
+animate();
+
+// Обработка изменения размера окна
+window.addEventListener('resize', () => {
+renderer.setSize(window.innerWidth, window.innerHeight);
+camera.aspect = window.innerWidth / window.innerHeight;
+camera.updateProjectionMatrix();
+});
+</script>
+
+</body>
+</html>
